@@ -65,5 +65,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
+    implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
     testImplementation("junit:junit:4.13.2")
 }
