@@ -2,6 +2,7 @@ package jkz.sehat.ui.components.home
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ fun Greeting(name: String) {
         Text(text = "Hello $name!", fontSize = 4.em)
         Text(
             text = "How are you feeling today?",
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 12.em,
             fontWeight = FontWeight.Bold,
             lineHeight = 1.em
