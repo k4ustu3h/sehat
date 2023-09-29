@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">सेहत</string>
+    <string name="hello">नमस्ते</string>
+    <string name="greeting">कैसे हैं आप आज?</string>
+    <string name="user_name">रामप्रसाद</string>
+    <string-array name="actions">
+        <item>दवाइयों पर नज़र रखें</item>
+        <item>दवाइयाँ खोजें</item>
+        <item>आहार योजना</item>
+        <item>नियुक्तियाँ</item>
+    </string-array>
+</resources>
