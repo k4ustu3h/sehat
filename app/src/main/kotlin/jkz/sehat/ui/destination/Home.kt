@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import jkz.sehat.R
 import jkz.sehat.ui.components.CardGrid
 import jkz.sehat.ui.components.home.Greeting
 import jkz.sehat.ui.theme.SehatTheme
@@ -20,7 +22,7 @@ fun Home() {
                 .padding(top = 8.dp, bottom = 8.dp)
                 .fillMaxHeight()
         ) {
-            Greeting(name = "Ramprasad")
+            Greeting(name = stringResource(id = R.string.user_name))
             CardGrid()
         }
     }

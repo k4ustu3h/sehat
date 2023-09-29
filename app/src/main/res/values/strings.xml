@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Sehat</string>
+    <string name="hello">Hello</string>
+    <string name="greeting">How are you feeling today?</string>
+    <string name="user_name">Ramprasad</string>
+    <string-array name="actions">
+        <item>Medication Tracking</item>
+        <item>Browse Medicine</item>
+        <item>Dietary Planning</item>
+        <item>Appointments</item>
+    </string-array>
 </resources>

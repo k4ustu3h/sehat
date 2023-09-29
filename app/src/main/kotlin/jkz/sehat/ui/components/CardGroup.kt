@@ -11,14 +11,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-
-val actions = listOf("Medication Tracking", "Browse Medicines", "Dietary Planning", "Appointments")
+import jkz.sehat.R
 
 @Composable
 fun CardGrid() {
+    val actions = stringArrayResource(id = R.array.actions)
     LazyVerticalGrid(
         columns = GridCells.Fixed(2), contentPadding = PaddingValues(8.dp)
     ) {
