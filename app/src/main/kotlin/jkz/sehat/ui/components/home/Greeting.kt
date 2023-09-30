@@ -10,19 +10,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import jkz.sehat.R
 
 @Composable
 fun Greeting(name: String) {
     Column(Modifier.padding(all = 8.dp)) {
-        Text(text = stringResource(id = R.string.hello) + " " + name + "!", fontSize = 4.em)
+        Text(
+            text = stringResource(id = R.string.hello),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleSmall
+        )
+        Text(
+            text = stringResource(id = R.string.user_name),
+            style = MaterialTheme.typography.bodyLarge
+        )
         Text(
             text = stringResource(id = R.string.greeting),
             color = MaterialTheme.colorScheme.primary,
-            fontSize = 12.em,
             fontWeight = FontWeight.Bold,
-            lineHeight = 1.em
+            style = MaterialTheme.typography.displayMedium
         )
     }
 }

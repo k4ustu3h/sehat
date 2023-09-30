@@ -10,8 +10,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import jkz.sehat.R
-import jkz.sehat.ui.components.CardGrid
 import jkz.sehat.ui.components.home.Greeting
+import jkz.sehat.ui.components.home.QuickActions
 import jkz.sehat.ui.theme.SehatTheme
 
 @Composable
@@ -19,11 +19,11 @@ fun Home() {
     Surface {
         Column(
             Modifier
-                .padding(top = 8.dp, bottom = 8.dp)
+                .padding(vertical = 8.dp)
                 .fillMaxHeight()
         ) {
             Greeting(name = stringResource(id = R.string.user_name))
-            CardGrid()
+            QuickActions()
         }
     }
 }

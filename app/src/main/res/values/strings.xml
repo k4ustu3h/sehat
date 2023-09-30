@@ -3,6 +3,7 @@
     <string name="hello">Hello</string>
     <string name="greeting">How are you feeling today?</string>
     <string name="user_name">Ramprasad</string>
+    <string name="quick_actions">Quick Actions</string>
     <string-array name="actions">
         <item>Medication Tracking</item>
         <item>Browse Medicine</item>
