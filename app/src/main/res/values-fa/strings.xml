@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">دوز</string>
     <string name="home">خانه</string>
     <string name="calendar">تقویم</string>
     <string name="add_medication">اضافه کردن دارو</string>

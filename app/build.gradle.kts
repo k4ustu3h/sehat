@@ -13,7 +13,7 @@ android {
     compileSdk = libs.versions.compile.sdk.version.get().toInt()
 
     defaultConfig {
-        applicationId = "com.waseefakhtar.doseapp"
+        applicationId = "k4ustu3h.sehat"
         minSdk = libs.versions.min.sdk.version.get().toInt()
         targetSdk = libs.versions.target.sdk.version.get().toInt()
         versionCode = libs.versions.version.code.get().toInt()
@@ -57,7 +57,7 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
 
-    namespace = "com.waseefakhtar.doseapp"
+    namespace = "k4ustu3h.sehat"
 }
 
 dependencies {

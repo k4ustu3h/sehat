@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "995841033966",
-    "project_id": "dose-7d65b",
-    "storage_bucket": "dose-7d65b.appspot.com"
+    "project_number": "498483245001",
+    "project_id": "k4ustu3h-sehat",
+    "storage_bucket": "k4ustu3h-sehat.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:995841033966:android:f9fa2a4c671ec4993815ff",
+        "mobilesdk_app_id": "1:498483245001:android:0223df9a1a895962cc0218",
         "android_client_info": {
-          "package_name": "com.waseefakhtar.doseapp"
+          "package_name": "k4ustu3h.sehat"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "995841033966-bakjl4d4pno6501ep80jt2k5ebckb07r.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDGu4SyesfQSfxSehK-5TZF8nj0Rzgn-UA"
+          "current_key": "AIzaSyCKq39o8zy5q8dcOdHWGeM9NeH6oljD7ek"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "995841033966-bakjl4d4pno6501ep80jt2k5ebckb07r.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

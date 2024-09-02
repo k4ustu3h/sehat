@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Dose App"
+rootProject.name = "Sehat"
 include(":app")

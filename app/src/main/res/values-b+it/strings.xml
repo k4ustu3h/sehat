@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Dose</string>
     <string name="home">Home</string>
     <string name="calendar">Calendario</string>
     <string name="add_time">Aggiungi Orario</string>
