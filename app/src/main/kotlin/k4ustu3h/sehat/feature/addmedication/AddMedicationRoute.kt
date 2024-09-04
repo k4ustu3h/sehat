@@ -16,8 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
@@ -31,10 +31,10 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
@@ -93,9 +93,11 @@ fun AddMedicationScreen(
     var numberOfDosage by rememberSaveable { mutableStateOf("1") }
     var recurrence by rememberSaveable { mutableStateOf(Recurrence.Daily.name) }
     var endDate by rememberSaveable { mutableLongStateOf(Date().time) }
-    val selectedTimes = rememberSaveable(saver = CalendarInformation.getStateListSaver()) { mutableStateListOf(
-        CalendarInformation(Calendar.getInstance())
-    ) }
+    val selectedTimes = rememberSaveable(saver = CalendarInformation.getStateListSaver()) {
+        mutableStateListOf(
+            CalendarInformation(Calendar.getInstance())
+        )
+    }
     val context = LocalContext.current
 
     fun addTime(time: CalendarInformation) {
@@ -122,7 +124,7 @@ fun AddMedicationScreen(
                         elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
                         )
                     }
@@ -132,7 +134,7 @@ fun AddMedicationScreen(
                         modifier = Modifier.padding(16.dp),
                         text = stringResource(id = R.string.add_medication),
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.displaySmall
+                        style = MaterialTheme.typography.headlineMedium
                     )
                 }
             )
@@ -192,7 +194,7 @@ fun AddMedicationScreen(
                 text = stringResource(id = R.string.medication_name),
                 style = MaterialTheme.typography.bodyLarge
             )
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth(),
                 value = medicationName,
@@ -219,7 +221,7 @@ fun AddMedicationScreen(
                         text = stringResource(id = R.string.dose_per_day),
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    TextField(
+                    OutlinedTextField(
                         modifier = Modifier.width(128.dp),
                         value = numberOfDosage,
                         onValueChange = {
@@ -381,13 +383,13 @@ fun RecurrenceDropdownMenu(recurrence: (String) -> Unit) {
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
         ) {
-            TextField(
+            OutlinedTextField(
                 modifier = Modifier.menuAnchor(),
                 readOnly = true,
                 value = selectedOptionText,
                 onValueChange = {},
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -456,7 +458,7 @@ fun EndDateTextField(endDate: (Long) -> Unit) {
         }
     )
 
-    TextField(
+    OutlinedTextField(
         modifier = Modifier.fillMaxWidth(),
         readOnly = true,
         value = selectedDate,
@@ -491,7 +493,7 @@ fun TimerTextField(
         }
     )
 
-    TextField(
+    OutlinedTextField(
         modifier = Modifier.fillMaxWidth(),
         readOnly = true,
         value = selectedTime.getDateFormatted(HOUR_MINUTE_FORMAT),

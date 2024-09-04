@@ -152,8 +152,8 @@ fun DailyOverviewCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp)
-            .height(156.dp),
-        shape = RoundedCornerShape(36.dp),
+            .height(164.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.tertiary
@@ -214,8 +214,8 @@ fun EmptyCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(156.dp),
-        shape = RoundedCornerShape(36.dp),
+            .height(164.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.tertiary
@@ -228,7 +228,7 @@ fun EmptyCard(
         Row(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp, 24.dp, 0.dp, 16.dp)
+                    .padding(24.dp, 24.dp, 0.dp, 24.dp)
                     .fillMaxWidth(.50F)
                     .align(Alignment.CenterVertically),
                 verticalArrangement = Arrangement.spacedBy(8.dp),

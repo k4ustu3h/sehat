@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import dagger.hilt.android.AndroidEntryPoint
 import k4ustu3h.sehat.analytics.AnalyticsEvents
 import k4ustu3h.sehat.analytics.AnalyticsHelper
@@ -16,6 +17,7 @@ class MainActivity : ComponentActivity() {
     lateinit var analyticsHelper: AnalyticsHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             Sehat(analyticsHelper = analyticsHelper)
