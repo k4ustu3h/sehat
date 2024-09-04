@@ -180,7 +180,7 @@ fun MedicationDetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                    painter = painterResource(id = R.mipmap.ic_dose),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                 )
