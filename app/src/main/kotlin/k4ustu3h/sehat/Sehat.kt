@@ -3,7 +3,9 @@ package k4ustu3h.sehat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -29,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -45,6 +48,7 @@ import k4ustu3h.sehat.analytics.AnalyticsEvents
 import k4ustu3h.sehat.analytics.AnalyticsHelper
 import k4ustu3h.sehat.feature.addmedication.navigation.AddMedicationDestination
 import k4ustu3h.sehat.feature.history.HistoryDestination
+import k4ustu3h.sehat.feature.home.LensFAB
 import k4ustu3h.sehat.feature.home.navigation.HomeDestination
 import k4ustu3h.sehat.navigation.SehatNavHost
 import k4ustu3h.sehat.navigation.SehatTopLevelNavigation
@@ -60,8 +64,7 @@ fun Sehat(
     SehatTheme {
         // A surface container using the 'background' color from the theme
         Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
 
             val navController = rememberNavController()
@@ -75,20 +78,23 @@ fun Sehat(
             val bottomBarVisibility = rememberSaveable { (mutableStateOf(true)) }
             val fabVisibility = rememberSaveable { (mutableStateOf(true)) }
 
-            Scaffold(
-                modifier = Modifier.padding(16.dp, 0.dp),
+            Scaffold(modifier = Modifier.padding(16.dp, 0.dp),
                 containerColor = Color.Transparent,
                 contentColor = MaterialTheme.colorScheme.onBackground,
                 floatingActionButton = {
-
-                    AnimatedVisibility(
-                        visible = fabVisibility.value,
+                    AnimatedVisibility(visible = fabVisibility.value,
                         enter = slideInVertically(initialOffsetY = { it }),
                         exit = slideOutVertically(targetOffsetY = { it }),
                         content = {
-                            SehatFAB(navController, analyticsHelper)
-                        }
-                    )
+                            Column(
+                                horizontalAlignment = Alignment.End,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                LensFAB()
+                                SehatFAB(navController, analyticsHelper)
+                            }
+
+                        })
                 },
                 bottomBar = {
                     Box {
@@ -98,8 +104,7 @@ fun Sehat(
                         ) {
                             SnackbarUtil.hideSnackbar()
                         }
-                        AnimatedVisibility(
-                            visible = bottomBarVisibility.value,
+                        AnimatedVisibility(visible = bottomBarVisibility.value,
                             enter = slideInVertically(initialOffsetY = { it }),
                             exit = slideOutVertically(targetOffsetY = { it }),
                             content = {
@@ -108,11 +113,9 @@ fun Sehat(
                                     currentDestination = currentDestination,
                                     analyticsHelper = analyticsHelper
                                 )
-                            }
-                        )
+                            })
                     }
-                }
-            ) { padding ->
+                }) { padding ->
                 Row(
                     Modifier
                         .fillMaxSize()
@@ -152,32 +155,24 @@ private fun SehatBottomBar(
                 WindowInsets.safeDrawing.only(
                     WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
                 )
-            ),
-            tonalElevation = 0.dp
+            ), tonalElevation = 0.dp
         ) {
 
             TOP_LEVEL_DESTINATIONS.forEach { destination ->
                 val selected =
                     currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                NavigationBarItem(
-                    selected = selected,
-                    onClick =
-                    {
-                        trackTabClicked(analyticsHelper, destination.route)
-                        onNavigateToTopLevelDestination(destination)
-                    },
-                    icon = {
-                        Icon(
-                            if (selected) {
-                                destination.selectedIcon
-                            } else {
-                                destination.unselectedIcon
-                            },
-                            contentDescription = null
-                        )
-                    },
-                    label = { Text(stringResource(destination.iconTextId)) }
-                )
+                NavigationBarItem(selected = selected, onClick = {
+                    trackTabClicked(analyticsHelper, destination.route)
+                    onNavigateToTopLevelDestination(destination)
+                }, icon = {
+                    Icon(
+                        if (selected) {
+                            destination.selectedIcon
+                        } else {
+                            destination.unselectedIcon
+                        }, contentDescription = null
+                    )
+                }, label = { Text(stringResource(destination.iconTextId)) })
             }
         }
     }
@@ -195,12 +190,10 @@ private fun trackTabClicked(analyticsHelper: AnalyticsHelper, route: String) {
 
 @Composable
 fun SehatFAB(navController: NavController, analyticsHelper: AnalyticsHelper) {
-    ExtendedFloatingActionButton(
-        text = { Text(text = stringResource(id = R.string.add_medication)) },
+    ExtendedFloatingActionButton(text = { Text(text = stringResource(id = R.string.add_medication)) },
         icon = {
             Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = stringResource(R.string.add)
+                imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.add)
             )
         },
         onClick = {
