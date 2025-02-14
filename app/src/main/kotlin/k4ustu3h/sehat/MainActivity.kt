@@ -26,7 +26,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun parseIntent(intent: Intent?) {
-        val isMedicationNotification = intent?.getBooleanExtra(MEDICATION_NOTIFICATION, false) ?: false
+        val isMedicationNotification =
+            intent?.getBooleanExtra(MEDICATION_NOTIFICATION, false) ?: false
         if (isMedicationNotification) {
             analyticsHelper.logEvent(AnalyticsEvents.REMINDER_NOTIFICATION_CLICKED)
         }

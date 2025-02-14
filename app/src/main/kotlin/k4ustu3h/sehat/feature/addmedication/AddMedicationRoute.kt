@@ -1,26 +1,37 @@
 package k4ustu3h.sehat.feature.addmedication
 
-import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,11 +44,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -47,23 +58,27 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import k4ustu3h.sehat.R
 import k4ustu3h.sehat.analytics.AnalyticsEvents
 import k4ustu3h.sehat.domain.model.Medication
-import k4ustu3h.sehat.extension.toFormattedDateString
+import k4ustu3h.sehat.extension.toFormattedMonthDateString
 import k4ustu3h.sehat.feature.addmedication.model.CalendarInformation
 import k4ustu3h.sehat.feature.addmedication.viewmodel.AddMedicationViewModel
+import k4ustu3h.sehat.util.Frequency
 import k4ustu3h.sehat.util.HOUR_MINUTE_FORMAT
-import k4ustu3h.sehat.util.Recurrence
+import k4ustu3h.sehat.util.MedicationType
 import k4ustu3h.sehat.util.SnackbarUtil.Companion.showSnackbar
-import k4ustu3h.sehat.util.getRecurrenceList
+import k4ustu3h.sehat.util.getFrequencyList
 import java.util.Calendar
 import java.util.Date
 
@@ -77,7 +92,7 @@ fun DefaultPreview() {
 fun AddMedicationRoute(
     onBackClicked: () -> Unit,
     navigateToMedicationConfirm: (List<Medication>) -> Unit,
-    viewModel: AddMedicationViewModel = hiltViewModel()
+    viewModel: AddMedicationViewModel = hiltViewModel(),
 ) {
     AddMedicationScreen(onBackClicked, viewModel, navigateToMedicationConfirm)
 }
@@ -90,15 +105,16 @@ fun AddMedicationScreen(
     navigateToMedicationConfirm: (List<Medication>) -> Unit,
 ) {
     var medicationName by rememberSaveable { mutableStateOf("") }
-    var numberOfDosage by rememberSaveable { mutableStateOf("1") }
-    var recurrence by rememberSaveable { mutableStateOf(Recurrence.Daily.name) }
-    var endDate by rememberSaveable { mutableLongStateOf(Date().time) }
-    val selectedTimes = rememberSaveable(saver = CalendarInformation.getStateListSaver()) {
-        mutableStateListOf(
-            CalendarInformation(Calendar.getInstance())
-        )
-    }
+    var numberOfDosage by rememberSaveable { mutableStateOf("") }
+    var frequency by rememberSaveable { mutableStateOf(Frequency.EVERYDAY.name) }
+    var startDate by rememberSaveable { mutableLongStateOf(0L) }
+    var endDate by rememberSaveable { mutableLongStateOf(0L) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val selectedTimes = rememberSaveable(
+        saver = CalendarInformation.getStateListSaver(),
+    ) { mutableStateListOf(CalendarInformation(Calendar.getInstance())) }
     val context = LocalContext.current
+    var medicationType by rememberSaveable { mutableStateOf(MedicationType.getDefault()) }
 
     fun addTime(time: CalendarInformation) {
         selectedTimes.add(time)
@@ -113,30 +129,29 @@ fun AddMedicationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier
-                    .padding(vertical = 16.dp),
+                modifier = Modifier.padding(vertical = 16.dp),
                 navigationIcon = {
                     FloatingActionButton(
                         onClick = {
                             viewModel.logEvent(eventName = AnalyticsEvents.ADD_MEDICATION_ON_BACK_CLICKED)
                             onBackClicked()
                         },
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp)
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp),
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
                 title = {
                     Text(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(16.dp, 0.dp),
                         text = stringResource(id = R.string.add_medication),
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.headlineMedium
+                        style = MaterialTheme.typography.headlineMedium,
                     )
-                }
+                },
             )
         },
         bottomBar = {
@@ -148,147 +163,184 @@ fun AddMedicationScreen(
                 onClick = {
                     validateMedication(
                         name = medicationName,
-                        dosage = numberOfDosage.toIntOrNull() ?: 0,
-                        recurrence = recurrence,
+                        dosage = numberOfDosage.toIntOrNull() ?: 1,
+                        frequency = frequency,
+                        startDate = startDate,
                         endDate = endDate,
                         selectedTimes = selectedTimes,
+                        type = medicationType,
                         onInvalidate = {
                             val invalidatedValue = context.getString(it)
                             showSnackbar(
                                 context.getString(
                                     R.string.value_is_empty,
-                                    invalidatedValue
-                                )
+                                    invalidatedValue,
+                                ),
                             )
 
                             val event = String.format(
-                                AnalyticsEvents.ADD_MEDICATION_MEDICATION_VALUE_INVALIDATED,
-                                invalidatedValue
+                                AnalyticsEvents.ADD_MED_VALUE_INVALIDATED,
+                                invalidatedValue.lowercase(),
                             )
                             viewModel.logEvent(eventName = event)
                         },
                         onValidate = {
                             navigateToMedicationConfirm(it)
-                            viewModel.logEvent(eventName = AnalyticsEvents.ADD_MEDICATION_NAVIGATING_TO_MEDICATION_CONFIRM)
+                            viewModel.logEvent(eventName = AnalyticsEvents.ADD_MED_NAVIGATING_TO_MED_CONFIRM)
                         },
-                        viewModel = viewModel
+                        viewModel = viewModel,
                     )
                 },
-                shape = MaterialTheme.shapes.extraLarge
+                shape = MaterialTheme.shapes.extraLarge,
             ) {
                 Text(
                     text = stringResource(id = R.string.next),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-
-            Text(
-                text = stringResource(id = R.string.medication_name),
-                style = MaterialTheme.typography.bodyLarge
-            )
             OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 value = medicationName,
                 onValueChange = { medicationName = it },
-                placeholder = {
-                    Text(
-                        text = stringResource(R.string.medication_name_hint)
-                    )
+                label = { Text(stringResource(id = R.string.medication_name)) },
+                placeholder = { Text(stringResource(R.string.medication_name_hint)) },
+                singleLine = true,
+            )
+
+            Spacer(modifier = Modifier.padding(4.dp))
+
+            FrequencyDropdownMenu { frequency = it }
+
+            Spacer(modifier = Modifier.padding(4.dp))
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    value = buildDateRangeText(startDate, endDate),
+                    onValueChange = {},
+                    label = { Text(stringResource(R.string.duration)) },
+                    placeholder = { Text(stringResource(R.string.select_duration)) },
+                    trailingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                    interactionSource = remember { MutableInteractionSource() }.also { interactionSource ->
+                        LaunchedEffect(interactionSource) {
+                            interactionSource.interactions.collect {
+                                if (it is PressInteraction.Release) {
+                                    showDatePicker = true
+                                }
+                            }
+                        }
+                    },
+                )
+            }
+
+            DateRangePickerDialog(
+                showDialog = showDatePicker,
+                startDate = startDate,
+                endDate = endDate,
+                onDismiss = { showDatePicker = false },
+                onDateSelected = { start, end ->
+                    startDate = start
+                    endDate = end
                 },
             )
 
             Spacer(modifier = Modifier.padding(4.dp))
-
-            var isMaxDoseError by rememberSaveable { mutableStateOf(false) }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                val maxDose = 3
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.dose_per_day),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    OutlinedTextField(
-                        modifier = Modifier.width(128.dp),
-                        value = numberOfDosage,
-                        onValueChange = {
-                            if (it.length < maxDose) {
-                                isMaxDoseError = false
-                                numberOfDosage = it
-                            } else {
-                                isMaxDoseError = true
-                            }
-                        },
-                        trailingIcon = {
-                            if (isMaxDoseError) {
-                                Icon(
-                                    imageVector = Icons.Filled.Info,
-                                    contentDescription = stringResource(R.string.error),
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        },
-                        placeholder = {
-                            Text(
-                                text = stringResource(R.string.dosage_hint)
-                            )
-                        },
-                        isError = isMaxDoseError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                }
-                RecurrenceDropdownMenu { recurrence = it }
-            }
-
-            if (isMaxDoseError) {
-                Text(
-                    text = stringResource(R.string.max_dosage_error_message),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            Spacer(modifier = Modifier.padding(4.dp))
-            EndDateTextField { endDate = it }
-
-            Spacer(modifier = Modifier.padding(4.dp))
             Text(
-                text = stringResource(R.string.times_for_medication),
-                style = MaterialTheme.typography.bodyLarge
+                text = stringResource(R.string.schedule),
+                style = MaterialTheme.typography.bodyLarge,
             )
 
             for (index in selectedTimes.indices) {
-                TimerTextField(
-                    isLastItem = selectedTimes.lastIndex == index,
-                    isOnlyItem = selectedTimes.size == 1,
-                    time = {
-                        selectedTimes[index] = it
-                    },
-                    onDeleteClick = { removeTime(selectedTimes[index]) },
-                    logEvent = {
-                        viewModel.logEvent(AnalyticsEvents.ADD_MEDICATION_NEW_TIME_SELECTED)
-                    },
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TimerTextField(
+                        modifier = Modifier.weight(1f),
+                        isLastItem = selectedTimes.lastIndex == index,
+                        isOnlyItem = selectedTimes.size == 1,
+                        time = {
+                            selectedTimes[index] = it
+                        },
+                        onDeleteClick = { removeTime(selectedTimes[index]) },
+                        logEvent = {
+                            viewModel.logEvent(AnalyticsEvents.ADD_MEDICATION_NEW_TIME_SELECTED)
+                        },
+                    )
+
+                    if (index == selectedTimes.lastIndex) {
+                        Button(
+                            onClick = { addTime(CalendarInformation(Calendar.getInstance())) },
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.size(40.dp),
+                            shape = CircleShape,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(R.string.add_time),
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+                    }
+                }
             }
 
-            Button(
-                onClick = { addTime(CalendarInformation(Calendar.getInstance())) }
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
-                Text(stringResource(id = R.string.add_time))
+            Spacer(modifier = Modifier.padding(4.dp))
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = numberOfDosage,
+                onValueChange = {
+                    if (it.isEmpty() || it.toIntOrNull() != null) {
+                        if ((it.toIntOrNull() ?: 0) <= 3) {
+                            numberOfDosage = it
+                        }
+                    }
+                },
+                label = { Text(stringResource(id = R.string.dose_optional)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = { Text(stringResource(R.string.dosage_hint)) },
+                singleLine = true,
+            )
+
+            Spacer(modifier = Modifier.padding(4.dp))
+
+            Column {
+                Text(
+                    text = stringResource(R.string.type),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 0.dp, bottom = 8.dp)
+                )
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                        .padding(horizontal = 0.dp),
+                    userScrollEnabled = false
+                ) {
+                    items(MedicationType.entries) { type ->
+                        MedicationTypeBox(type = type,
+                            isSelected = type == medicationType,
+                            onSelect = { medicationType = type })
+                    }
+                }
             }
         }
     }
@@ -297,12 +349,14 @@ fun AddMedicationScreen(
 private fun validateMedication(
     name: String,
     dosage: Int,
-    recurrence: String,
+    frequency: String,
+    startDate: Long,
     endDate: Long,
     selectedTimes: List<CalendarInformation>,
+    type: MedicationType,
     onInvalidate: (Int) -> Unit,
     onValidate: (List<Medication>) -> Unit,
-    viewModel: AddMedicationViewModel
+    viewModel: AddMedicationViewModel,
 ) {
     if (name.isEmpty()) {
         onInvalidate(R.string.medication_name)
@@ -314,173 +368,112 @@ private fun validateMedication(
         return
     }
 
-    if (endDate < 1) {
-        onInvalidate(R.string.end_date)
+    if (startDate == 0L || endDate == 0L) {
+        onInvalidate(R.string.duration)
+        return
+    }
+
+    if (startDate >= endDate) {
+        onInvalidate(R.string.duration)
         return
     }
 
     if (selectedTimes.isEmpty()) {
-        onInvalidate(R.string.times_for_medication)
+        onInvalidate(R.string.schedule)
         return
     }
 
-    val medications =
-        viewModel.createMedications(name, dosage, recurrence, Date(endDate), selectedTimes)
+    val medications = viewModel.createMedications(
+        name = name,
+        dosage = dosage,
+        frequency = frequency,
+        startDate = Date(startDate),
+        endDate = Date(endDate),
+        medicationTimes = selectedTimes,
+        type = type
+    )
 
     onValidate(medications)
 }
 
-private fun handleSelection(
-    isSelected: Boolean,
-    selectionCount: Int,
-    canSelectMoreTimesOfDay: Boolean,
-    onStateChange: (Int, Boolean) -> Unit,
-    onShowMaxSelectionError: () -> Unit
-) {
-    if (isSelected) {
-        onStateChange(selectionCount - 1, !isSelected)
-    } else {
-        if (canSelectMoreTimesOfDay) {
-            onStateChange(selectionCount + 1, !isSelected)
-        } else {
-            onShowMaxSelectionError()
-        }
-    }
-}
-
-private fun canSelectMoreTimesOfDay(selectionCount: Int, numberOfDosage: Int): Boolean {
-    return selectionCount < numberOfDosage
-}
-
-private fun showMaxSelectionSnackbar(
-    numberOfDosage: String,
-    context: Context
-) {
-    val dosage = ((numberOfDosage.toIntOrNull() ?: 0) + 1).toString()
-    showSnackbar(
-        context.getString(
-            R.string.dosage_and_frequency_mismatch_error_message,
-            dosage
-        )
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecurrenceDropdownMenu(recurrence: (String) -> Unit) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+fun FrequencyDropdownMenu(frequency: (String) -> Unit) {
+    val options = getFrequencyList()
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOption by remember { mutableStateOf(options[0]) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
     ) {
-        Text(
-            text = stringResource(id = R.string.recurrence),
-            style = MaterialTheme.typography.bodyLarge
-        )
+        OutlinedTextField(
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            readOnly = true,
+            value = when (selectedOption.stringResId) {
+                R.string.every_n_days -> stringResource(
+                    selectedOption.stringResId, selectedOption.days
+                )
 
-        val options = getRecurrenceList().map { it.name }
-        var expanded by remember { mutableStateOf(false) }
-        var selectedOptionText by remember { mutableStateOf(options[0]) }
-        ExposedDropdownMenuBox(
+                R.string.every_n_weeks -> stringResource(
+                    selectedOption.stringResId, selectedOption.days / 7
+                )
+
+                else -> stringResource(selectedOption.stringResId)
+            },
+            onValueChange = {},
+            label = { Text(stringResource(id = R.string.frequency)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+        )
+        ExposedDropdownMenu(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
+            onDismissRequest = { expanded = false },
         ) {
-            OutlinedTextField(
-                modifier = Modifier.menuAnchor(),
-                readOnly = true,
-                value = selectedOptionText,
-                onValueChange = {},
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                options.forEach { selectionOption ->
-                    DropdownMenuItem(
-                        text = { Text(selectionOption) },
-                        onClick = {
-                            selectedOptionText = selectionOption
-                            recurrence(selectionOption)
-                            expanded = false
-                        }
-                    )
-                }
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            when (option.stringResId) {
+                                R.string.every_n_days -> stringResource(
+                                    option.stringResId, option.days
+                                )
+
+                                R.string.every_n_weeks -> stringResource(
+                                    option.stringResId, option.days / 7
+                                )
+
+                                else -> stringResource(option.stringResId)
+                            },
+                        )
+                    },
+                    onClick = {
+                        selectedOption = option
+                        frequency(option.name)
+                        expanded = false
+                    },
+                )
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EndDateTextField(endDate: (Long) -> Unit) {
-    Text(
-        text = stringResource(id = R.string.end_date),
-        style = MaterialTheme.typography.bodyLarge
-    )
-
-    var shouldDisplay by remember { mutableStateOf(false) }
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed: Boolean by interactionSource.collectIsPressedAsState()
-    if (isPressed) {
-        shouldDisplay = true
-    }
-
-    val today = Calendar.getInstance()
-    today.set(Calendar.HOUR_OF_DAY, 0)
-    today.set(Calendar.MINUTE, 0)
-    today.set(Calendar.SECOND, 0)
-    today.set(Calendar.MILLISECOND, 0)
-    val currentDayMillis = today.timeInMillis
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = System.currentTimeMillis(),
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= currentDayMillis
-            }
-        }
-    )
-
-    var selectedDate by rememberSaveable {
-        mutableStateOf(
-            datePickerState.selectedDateMillis?.toFormattedDateString() ?: ""
-        )
-    }
-
-    EndDatePickerDialog(
-        state = datePickerState,
-        shouldDisplay = shouldDisplay,
-        onConfirmClicked = { selectedDateInMillis ->
-            selectedDate = selectedDateInMillis.toFormattedDateString()
-            endDate(selectedDateInMillis)
-        },
-        dismissRequest = {
-            shouldDisplay = false
-        }
-    )
-
-    OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
-        readOnly = true,
-        value = selectedDate,
-        onValueChange = {},
-        trailingIcon = { Icons.Default.DateRange },
-        interactionSource = interactionSource
-    )
 }
 
 @Composable
 fun TimerTextField(
+    modifier: Modifier = Modifier,
     isLastItem: Boolean,
     isOnlyItem: Boolean,
     time: (CalendarInformation) -> Unit,
     onDeleteClick: () -> Unit,
-    logEvent: () -> Unit
+    logEvent: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed: Boolean by interactionSource.collectIsPressedAsState()
     val currentTime = CalendarInformation(Calendar.getInstance())
     var selectedTime by rememberSaveable(
-        stateSaver = CalendarInformation.getStateSaver()
+        stateSaver = CalendarInformation.getStateSaver(),
     ) { mutableStateOf(currentTime) }
 
     TimePickerDialogComponent(
@@ -490,30 +483,102 @@ fun TimerTextField(
             logEvent.invoke()
             selectedTime = it
             time(it)
-        }
+        },
     )
 
     OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         readOnly = true,
         value = selectedTime.getDateFormatted(HOUR_MINUTE_FORMAT),
         onValueChange = {},
         trailingIcon = {
-            // TODO: Make delete action work properly
             if (isLastItem && !isOnlyItem) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     IconButton(onClick = onDeleteClick) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
             }
         },
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     )
+}
+
+@Composable
+private fun buildDateRangeText(
+    startDate: Long,
+    endDate: Long,
+): String = if (startDate == 0L || endDate == 0L) {
+    ""
+} else {
+    "${Date(startDate).toFormattedMonthDateString()} - ${Date(endDate).toFormattedMonthDateString()}"
+}
+
+@Composable
+private fun MedicationTypeBox(
+    type: MedicationType, isSelected: Boolean, onSelect: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surface
+            )
+            .border(
+                width = 1.dp, color = if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onSelect)
+            .padding(12.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Icon(
+                painter = painterResource(
+                    when (type) {
+                        MedicationType.TABLET -> R.drawable.ic_tablet
+                        MedicationType.CAPSULE -> R.drawable.ic_capsule
+                        MedicationType.SYRUP -> R.drawable.ic_syrup
+                        MedicationType.DROPS -> R.drawable.ic_drops
+                        MedicationType.SPRAY -> R.drawable.ic_spray
+                        MedicationType.GEL -> R.drawable.ic_gel
+                    }
+                ),
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(
+                    when (type) {
+                        MedicationType.TABLET -> R.string.tablet
+                        MedicationType.CAPSULE -> R.string.capsule
+                        MedicationType.SYRUP -> R.string.type_syrup
+                        MedicationType.DROPS -> R.string.drops
+                        MedicationType.SPRAY -> R.string.spray
+                        MedicationType.GEL -> R.string.gel
+                    }
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = if (isSelected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
 }

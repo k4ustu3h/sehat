@@ -114,7 +114,7 @@ fun MedicationConfirmScreen(
                 count = medications.size,
                 medication.name,
                 medications.size,
-                medication.recurrence.lowercase(),
+                medication.frequency.lowercase(),
                 medication.endDate.toFormattedDateString()
             ),
             style = MaterialTheme.typography.titleMedium
@@ -135,7 +135,7 @@ fun MedicationConfirmScreen(
                 .align(Alignment.CenterHorizontally),
             onClick = {
                 logEvent.invoke(AnalyticsEvents.MEDICATION_CONFIRM_ON_CONFIRM_CLICKED)
-                viewModel.addMedication(context, MedicationConfirmState(medications))
+                viewModel.addMedication(MedicationConfirmState(medications))
             },
             shape = MaterialTheme.shapes.extraLarge
         ) {

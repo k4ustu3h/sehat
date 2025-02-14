@@ -1,26 +1,20 @@
 package k4ustu3h.sehat.feature.home.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
 import k4ustu3h.sehat.analytics.AnalyticsHelper
 import k4ustu3h.sehat.domain.model.Medication
-import k4ustu3h.sehat.extension.toFormattedDateString
 import k4ustu3h.sehat.extension.toFormattedYearMonthDateString
 import k4ustu3h.sehat.feature.home.model.CalendarModel
 import k4ustu3h.sehat.feature.home.usecase.GetMedicationsUseCase
 import k4ustu3h.sehat.feature.home.usecase.UpdateMedicationUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -32,66 +26,59 @@ class HomeViewModel @Inject constructor(
     private val updateMedicationUseCase: UpdateMedicationUseCase,
     private val savedStateHandle: SavedStateHandle,
     private val analyticsHelper: AnalyticsHelper
-
 ) : ViewModel() {
 
-    var state by mutableStateOf(HomeState())
-        private set
-    private var dateFilter = savedStateHandle.getStateFlow(
+    private val _selectedDate = MutableStateFlow(Date())
+    private val _dateFilter = savedStateHandle.getStateFlow(
         DATE_FILTER_KEY,
         Date().toFormattedYearMonthDateString()
-    ).onEach {
-        state = state.copy(
-            lastSelectedDate = it
-        )
+    )
+    private val _greeting = MutableStateFlow("")
+    private val _userName = MutableStateFlow("")
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _medications = _dateFilter.flatMapLatest { selectedDate ->
+        getMedicationsUseCase.getMedications(selectedDate)
     }
 
-    private val _selectedDate = MutableStateFlow(Date())
-    private val _medications = getMedicationsUseCase.getMedications()
-
-    val homeUiState = combine(_selectedDate, _medications) { selectedDate, medications ->
-        val filteredMedications = medications.filter {
-            it.medicationTime.toFormattedDateString() == selectedDate.toFormattedDateString()
-        }.sortedBy { it.medicationTime }
-
+    val homeUiState = combine(
+        _selectedDate,
+        _medications,
+        _dateFilter,
+        _greeting,
+        _userName
+    ) { selectedDate, medications, dateFilter, greeting, userName ->
         HomeState(
-            medications = filteredMedications
+            lastSelectedDate = dateFilter,
+            medications = medications.sortedBy { it.medicationTime },
+            greeting = greeting,
+            userName = userName
         )
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
-        HomeState()
+        HomeState(lastSelectedDate = Date().toFormattedYearMonthDateString())
     )
 
     fun updateSelectedDate(date: Date) {
         _selectedDate.value = date
+        // Update the date filter to trigger new medication fetch
+        savedStateHandle[DATE_FILTER_KEY] = date.toFormattedYearMonthDateString()
     }
 
     init {
-        loadMedications()
+        getUserName()
+        getGreeting()
     }
 
-    fun getUserName() {
-        state = state.copy(userName = "Kathryn")
+    private fun getUserName() {
+        _userName.value = "Kathryn"
         // TODO: Get user name from DB
     }
 
-    fun getGreeting() {
-        state = state.copy(greeting = "Greeting")
+    private fun getGreeting() {
+        _greeting.value = "Greeting"
         // TODO: Get greeting by checking system time
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun loadMedications() {
-        viewModelScope.launch {
-            dateFilter.flatMapLatest { selectedDate ->
-                getMedicationsUseCase.getMedications(selectedDate).onEach { medicationList ->
-                    state = state.copy(
-                        medications = medicationList
-                    )
-                }
-            }.launchIn(viewModelScope)
-        }
     }
 
     fun selectDate(selectedDate: CalendarModel.DateModel) {
@@ -111,6 +98,7 @@ class HomeViewModel @Inject constructor(
     fun logEvent(eventName: String) {
         analyticsHelper.logEvent(eventName = eventName)
     }
+
     companion object {
         const val DATE_FILTER_KEY = "medication_date_filter"
     }

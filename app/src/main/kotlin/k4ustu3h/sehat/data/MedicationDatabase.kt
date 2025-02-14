@@ -11,9 +11,9 @@ import k4ustu3h.sehat.data.entity.MedicationEntity
 
 @Database(
     entities = [MedicationEntity::class],
-    version = 2,
+    version = 4,
     autoMigrations = [
-        AutoMigration(from = 1, to = 2, spec = MedicationDatabase.AutoMigration::class)
+        AutoMigration(from = 3, to = 4, spec = MedicationDatabase.AutoMigration::class)
     ]
 )
 @TypeConverters(Converters::class)

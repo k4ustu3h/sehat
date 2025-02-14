@@ -1,16 +1,19 @@
 package k4ustu3h.sehat.domain.model
 
 import android.os.Parcelable
+import k4ustu3h.sehat.util.MedicationType
 import kotlinx.parcelize.Parcelize
 import java.util.Date
 
 @Parcelize
 data class Medication(
-    val id: Long?,
+    val id: Long = 0,
     val name: String,
     val dosage: Int,
-    val recurrence: String,
+    val frequency: String,
+    val startDate: Date,
     val endDate: Date,
     val medicationTaken: Boolean,
-    val medicationTime: Date
+    val medicationTime: Date,
+    val type: MedicationType = MedicationType.getDefault()
 ) : Parcelable
