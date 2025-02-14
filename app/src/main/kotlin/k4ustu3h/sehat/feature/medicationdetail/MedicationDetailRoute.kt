@@ -1,7 +1,6 @@
-package k4ustu3h.sehat.feature.medicationdetail
+package com.waseefakhtar.doseapp.feature.medicationdetail
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -24,36 +24,50 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import k4ustu3h.sehat.R
-import k4ustu3h.sehat.analytics.AnalyticsEvents
-import k4ustu3h.sehat.domain.model.Medication
-import k4ustu3h.sehat.extension.toFormattedDateString
-import k4ustu3h.sehat.extension.toFormattedTimeString
-import k4ustu3h.sehat.feature.medicationdetail.viewmodel.MedicationDetailViewModel
-import k4ustu3h.sehat.util.SnackbarUtil.Companion.showSnackbar
+import com.waseefakhtar.doseapp.R
+import com.waseefakhtar.doseapp.analytics.AnalyticsEvents
+import com.waseefakhtar.doseapp.domain.model.Medication
+import com.waseefakhtar.doseapp.extension.toFormattedDateString
+import com.waseefakhtar.doseapp.extension.toFormattedTimeString
+import com.waseefakhtar.doseapp.feature.medicationdetail.viewmodel.MedicationDetailViewModel
+import com.waseefakhtar.doseapp.util.MedicationType
+import com.waseefakhtar.doseapp.util.SnackbarUtil.Companion.showSnackbar
 
 @Composable
 fun MedicationDetailRoute(
-    medication: Medication?,
+    medicationId: Long?,
     onBackClicked: () -> Unit,
     viewModel: MedicationDetailViewModel = hiltViewModel()
 ) {
+    val medication by viewModel.medication.collectAsState()
+
+    LaunchedEffect(Unit) {
+        medicationId?.let {
+            viewModel.getMedicationById(it)
+        }
+    }
+
     medication?.let {
-        MedicationDetailScreen(medication, viewModel, onBackClicked)
+        MedicationDetailScreen(
+            medication = it,
+            viewModel = viewModel,
+            onBackClicked = onBackClicked
+        )
     }
 }
 
@@ -62,19 +76,27 @@ fun MedicationDetailRoute(
 fun MedicationDetailScreen(
     medication: Medication,
     viewModel: MedicationDetailViewModel,
-    onBackClicked: () -> Unit,
-
-    ) {
-    var isTakenTapped by remember { mutableStateOf(medication.medicationTaken) }
-    var isSkippedTapped by remember { mutableStateOf(!medication.medicationTaken) }
+    onBackClicked: () -> Unit
+) {
+    val (cardColor, boxColor, textColor) = medication.type.getCardColor()
+    var isTakenTapped by remember(medication.medicationTaken) {
+        mutableStateOf(medication.medicationTaken)
+    }
+    var isSkippedTapped by remember(medication.medicationTaken) {
+        mutableStateOf(!medication.medicationTaken)
+    }
 
     val context = LocalContext.current
+
+    LaunchedEffect(medication) {
+        isTakenTapped = medication.medicationTaken
+        isSkippedTapped = !medication.medicationTaken
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier
-                    .padding(vertical = 16.dp),
+                modifier = Modifier.padding(vertical = 16.dp),
                 navigationIcon = {
                     FloatingActionButton(
                         onClick = {
@@ -89,7 +111,7 @@ fun MedicationDetailScreen(
                         )
                     }
                 },
-                title = { }
+                title = {}
             )
         },
         bottomBar = {
@@ -162,27 +184,47 @@ fun MedicationDetailScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 modifier = Modifier.padding(16.dp),
                 style = MaterialTheme.typography.titleLarge,
                 text = medication.medicationTime.toFormattedDateString(),
-                color = MaterialTheme.colorScheme.primary
+                color = Color(boxColor)
             )
 
             Box(
                 modifier = Modifier
                     .padding(16.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .size(120.dp)
+                    .border(
+                        width = 1.5.dp, color = Color(boxColor), shape = RoundedCornerShape(64.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.mipmap.ic_dose),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
+                Icon(
+                    painter = painterResource(
+                        when (medication.type) {
+                            MedicationType.TABLET -> R.drawable.ic_tablet
+                            MedicationType.CAPSULE -> R.drawable.ic_capsule
+                            MedicationType.SYRUP -> R.drawable.ic_syrup
+                            MedicationType.DROPS -> R.drawable.ic_drops
+                            MedicationType.SPRAY -> R.drawable.ic_spray
+                            MedicationType.GEL -> R.drawable.ic_gel
+                        }
+                    ),
+                    contentDescription = stringResource(
+                        when (medication.type) {
+                            MedicationType.TABLET -> R.string.tablet
+                            MedicationType.CAPSULE -> R.string.capsule
+                            MedicationType.SYRUP -> R.string.type_syrup
+                            MedicationType.DROPS -> R.string.drops
+                            MedicationType.SPRAY -> R.string.spray
+                            MedicationType.GEL -> R.string.gel
+                        }
+                    ),
+                    modifier = Modifier.size(64.dp),
+                    tint = Color(boxColor)
                 )
             }
 
@@ -190,17 +232,26 @@ fun MedicationDetailScreen(
                 text = medication.name,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = Color(boxColor)
             )
 
+            val doseAndType = "${medication.dosage} ${
+            stringResource(
+                when (medication.type) {
+                    MedicationType.TABLET -> R.string.tablet
+                    MedicationType.CAPSULE -> R.string.capsule
+                    MedicationType.SYRUP -> R.string.type_syrup
+                    MedicationType.DROPS -> R.string.drops
+                    MedicationType.SPRAY -> R.string.spray
+                    MedicationType.GEL -> R.string.gel
+                }
+            ).lowercase()
+            } at ${medication.medicationTime.toFormattedTimeString()}"
+
             Text(
-                text = stringResource(
-                    id = R.string.medication_dose_details,
-                    medication.dosage,
-                    medication.medicationTime.toFormattedTimeString()
-                ),
+                text = doseAndType,
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
+                color = Color(boxColor)
             )
         }
     }
